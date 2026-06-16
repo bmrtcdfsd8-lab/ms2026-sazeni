@@ -31,10 +31,12 @@ export function BetSlip() {
 
   return (
     <>
-      {/* Floating trigger */}
+      {/* Floating trigger
+          Mobile: .tiket-float (index.css) places it above BottomNav + safe-area.
+          Desktop (sm+): sm:bottom-6 sm:right-6 takes over. */}
       <button
         onClick={toggleBetSlip}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl bg-neon-blue text-navy-950 font-bold shadow-lg shadow-neon-blue/30 hover:shadow-neon-blue/50 transition-all hover:scale-105"
+        className="tiket-float fixed sm:bottom-6 sm:right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl bg-neon-blue text-navy-950 font-bold shadow-lg shadow-neon-blue/30 hover:shadow-neon-blue/50 transition-all hover:scale-105"
       >
         <ReceiptText size={18} />
         <span>Tiket</span>

@@ -72,3 +72,16 @@
 .bracket-line {
   border-color: rgba(255, 255, 255, 0.08);
 }
+
+/*
+ * Tiket floating button — mobile only (max 639px = below Tailwind's "sm").
+ * Must clear: BottomNav (3.5rem / 56px) + iPhone safe-area-inset-bottom
+ * (typically 34px on iPhone with home indicator) + 12px breathing room.
+ * env() is not supported in Tailwind arbitrary values, so this lives here.
+ */
+@media (max-width: 639px) {
+  .tiket-float {
+    bottom: calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem);
+    right: 1rem;
+  }
+}

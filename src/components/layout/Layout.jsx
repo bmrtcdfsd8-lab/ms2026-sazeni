@@ -6,8 +6,10 @@ export function Layout({ children }) {
   return (
     <div className="min-h-screen bg-navy-950 text-white">
       <Navbar />
-      {/* pb-32 on mobile = 128px clears both the fixed BottomNav (56px) and BetSlip */}
-      <main className="max-w-7xl mx-auto px-4 py-6 pb-32 sm:pb-24">
+      {/* Mobile pb-44 (176px) clears: safe-area (~34px) + BottomNav (56px) +
+          gap (12px) + Tiket button (~48px) + scroll breathing room (16px) ≈ 166px.
+          Desktop pb-24 (96px) clears the Tiket button at bottom-6. */}
+      <main className="max-w-7xl mx-auto px-4 py-6 pb-44 sm:pb-24">
         {children}
       </main>
       <BottomNav />

@@ -110,6 +110,26 @@ function normBet(row) {
   }
 }
 
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+export async function fetchAllUsersAdmin() {
+  const { data, error } = await supabase
+    .from('leaderboard')
+    .select('*')
+    .order('coins', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+export async function deleteUser(userId) {
+  // bets are removed automatically via ON DELETE CASCADE on the FK
+  const { error } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', userId)
+  if (error) throw error
+}
+
 // ── Leaderboard ───────────────────────────────────────────────────────────────
 
 export async function fetchLeaderboard() {

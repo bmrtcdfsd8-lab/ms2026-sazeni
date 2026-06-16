@@ -1,18 +1,16 @@
 import { useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { formatCoins } from '@/utils/format'
-import { RefreshCw, User, Coins, Info, LogOut, Cloud } from 'lucide-react'
+import { User, Coins, Info, LogOut, Cloud } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export function Settings() {
-  const username   = useStore((s) => s.username)
-  const coins      = useStore((s) => s.coins)
-  const userId     = useStore((s) => s.userId)
+  const username    = useStore((s) => s.username)
+  const coins       = useStore((s) => s.coins)
+  const userId      = useStore((s) => s.userId)
   const setUsername = useStore((s) => s.setUsername)
-  const resetCoins  = useStore((s) => s.resetCoins)
   const logout      = useStore((s) => s.logout)
-  const [nameInput, setNameInput]     = useState(username)
-  const [confirmReset, setConfirmReset] = useState(false)
+  const [nameInput, setNameInput]       = useState(username)
   const [confirmLogout, setConfirmLogout] = useState(false)
 
   function handleNameSave() {
@@ -30,17 +28,6 @@ export function Settings() {
     }
     logout()
     toast.success('Odhlášeno — zadej přezdívku znovu pro přihlášení')
-  }
-
-  function handleReset() {
-    if (!confirmReset) {
-      setConfirmReset(true)
-      setTimeout(() => setConfirmReset(false), 5000)
-      return
-    }
-    resetCoins()
-    setConfirmReset(false)
-    toast.success('Zůstatek resetován na 2000 mincí!')
   }
 
   return (
@@ -71,31 +58,18 @@ export function Settings() {
         </div>
       </SettingsCard>
 
-      {/* Coins */}
+      {/* Coins — read-only display, no reset */}
       <SettingsCard icon={<Coins size={18} className="text-neon-gold" />} title="Virtuální mince">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <div>
             <div className="text-3xl font-bold font-mono text-neon-gold">
               {formatCoins(coins)} 🪙
             </div>
-            <div className="text-xs text-slate-500 mt-1">Aktuální zůstatek</div>
+            <div className="text-xs text-slate-500 mt-1">
+              Aktuální zůstatek · synchronizováno ze serveru
+            </div>
           </div>
         </div>
-        <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-3 text-sm text-yellow-400 mb-4">
-          ⚠️ Reset vrátí zůstatek na 2000 mincí a zapíše novou transakci do historie. Sázky zůstanou zachovány.
-        </div>
-        <button
-          onClick={handleReset}
-          className={[
-            'flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all',
-            confirmReset
-              ? 'bg-neon-red/20 border-neon-red text-neon-red animate-bounce-subtle'
-              : 'bg-navy-700 border-white/10 text-white hover:border-white/30',
-          ].join(' ')}
-        >
-          <RefreshCw size={16} />
-          {confirmReset ? '⚠️ Klikni znovu pro potvrzení' : 'Resetovat mince (2000)'}
-        </button>
       </SettingsCard>
 
       {/* Account / Logout */}

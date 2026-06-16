@@ -6,6 +6,7 @@ import { Tournament } from '@/pages/Tournament'
 import { MyBets } from '@/pages/MyBets'
 import { Settings } from '@/pages/Settings'
 import { Leaderboard } from '@/pages/Leaderboard'
+import { Admin } from '@/pages/Admin'
 import { AuthScreen } from '@/pages/AuthScreen'
 import { useLiveData } from '@/hooks/useLiveData'
 import { useAutoSettle } from '@/hooks/useAutoSettle'
@@ -34,6 +35,7 @@ function AppInner() {
         <Route path="/sazky" element={<MyBets />} />
         <Route path="/zebricek" element={<Leaderboard />} />
         <Route path="/nastaveni" element={<Settings />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </Layout>
   )

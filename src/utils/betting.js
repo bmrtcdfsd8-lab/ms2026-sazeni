@@ -179,28 +179,10 @@ export function getMarketsForMatch(match, apiOdds) {
     ...awayPlayers.map((p) => `${awayTeam?.name}: ${p}`),
   ]
 
-  // Merge: generated fallback for everything, sanitised API odds on top
-  const fallback = generateFallbackOdds(match)
-  const clean    = sanitiseApiOdds(apiOdds)
-  const o = {
-    ...fallback,
-    ...clean,
-    // Deep-merge OVER_UNDER: API values fill in real prices, fallback covers the rest
-    OVER_UNDER: { ...fallback.OVER_UNDER, ...(clean.OVER_UNDER || {}) },
-  }
-
-  // Validate match-winner odds: for strong home favourites, home win (1) must always
-  // have shorter odds than draw (X).  If they appear swapped — whether from the API
-  // returning transposed outcomes or from the fallback using the wrong tier because
-  // the TLA code was missing — swap them back.
-  if (
-    o.MATCH_WINNER?.home != null &&
-    o.MATCH_WINNER?.draw != null &&
-    isFavorite(homeTeam) &&
-    o.MATCH_WINNER.home > o.MATCH_WINNER.draw
-  ) {
-    o.MATCH_WINNER = { ...o.MATCH_WINNER, home: o.MATCH_WINNER.draw, draw: o.MATCH_WINNER.home }
-  }
+  // Odds are seeded purely from match.id so every device sees identical values.
+  // The-odds-api.com prices are NOT merged here — bookmaker odds float in real
+  // time and would make the same match show different numbers on different devices.
+  const o = { ...generateFallbackOdds(match) }
 
   // Seeded scorer odds — stable per match + player slot
   const scorerRng = makeRng(match.id, 'scorer')

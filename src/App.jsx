@@ -20,38 +20,57 @@ import { useSupabaseSync } from '@/hooks/useSupabaseSync'
 //   - wipes localStorage and shows AuthScreen with the ban error
 function BanGate({ children }) {
   const [status, setStatus] = useState('pending') // 'pending' | 'clear' | 'banned'
-  const username = useStore((s) => s.username)
-  const userId   = useStore((s) => s.userId)
-  const logout   = useStore((s) => s.logout)
+  const logout = useStore((s) => s.logout)
 
   useEffect(() => {
-    if (!userId) {
-      // No session in localStorage — nothing to check
-      setStatus('clear')
-      return
+    function runCheck() {
+      // Read directly from the store at effect time (not from the render closure).
+      // useStore.getState() always returns the current hydrated value, even if
+      // Zustand's persist middleware hadn't finished hydrating when React rendered.
+      const { userId, username } = useStore.getState()
+
+      console.log('[BanGate] running — userId:', userId, 'username:', username)
+
+      if (!userId) {
+        console.log('[BanGate] no session, skipping ban check → clear')
+        setStatus('clear')
+        return
+      }
+
+      console.log('[BanGate] calling /api/check-ban for:', username)
+      fetch(`/api/check-ban?username=${encodeURIComponent(username)}`)
+        .then(async (res) => {
+          console.log('[BanGate] /api/check-ban response status:', res.status)
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          const data = await res.json()
+          console.log('[BanGate] /api/check-ban response data:', JSON.stringify(data))
+          return !!data.banned
+        })
+        .then((banned) => {
+          console.log('[BanGate] banned:', banned, '— setting status to', banned ? 'banned' : 'clear')
+          if (banned) {
+            logout() // wipes Zustand state + localStorage
+            setStatus('banned')
+          } else {
+            setStatus('clear')
+          }
+        })
+        .catch((err) => {
+          // Endpoint unavailable (local dev without vercel dev, or network error) — fail open
+          console.warn('[BanGate] check failed, allowing through:', err.message)
+          setStatus('clear')
+        })
     }
 
-    fetch(`/api/check-ban?username=${encodeURIComponent(username)}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = await res.json()
-        console.log(`BAN CHECK: username=${username} banned=${data.banned}`)
-        return data.banned === true
-      })
-      .then((banned) => {
-        if (banned) {
-          logout() // wipes localStorage / Zustand state
-          setStatus('banned')
-        } else {
-          setStatus('clear')
-        }
-      })
-      .catch((err) => {
-        // Endpoint not available (e.g. local vite dev without vercel dev) — fail open
-        console.warn('[ban-check] endpoint unreachable, allowing through:', err.message)
-        setStatus('clear')
-      })
-  }, []) // run once on mount, before any other hook
+    // Wait for Zustand persist to finish hydrating from localStorage before reading state.
+    // With synchronous localStorage this is usually instant, but Zustand v5 may defer it.
+    if (useStore.persist.hasHydrated()) {
+      runCheck()
+    } else {
+      const unsub = useStore.persist.onFinishHydration(runCheck)
+      return unsub // cleanup if component unmounts before hydration
+    }
+  }, []) // run once on mount, before AppMain or any other hook
 
   if (status === 'pending') {
     return (

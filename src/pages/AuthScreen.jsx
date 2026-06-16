@@ -3,7 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import toast from 'react-hot-toast'
 import { Loader2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
-import { createUser, findUserByUsername, fetchUserBets, isUsernameBanned } from '@/services/supabase'
+import { createUser, findUserByUsername, fetchUserBets } from '@/services/supabase'
 
 export function AuthScreen({ bannedError = false }) {
   const [username, setUsername] = useState('')
@@ -18,11 +18,16 @@ export function AuthScreen({ bannedError = false }) {
 
     setLoading(true)
     try {
-      const banned = await isUsernameBanned(name)
-      if (banned) {
-        toast.error('Tento hráč byl vyloučen ze hry.')
-        setLoading(false)
-        return
+      // Server-side ban check — uses service role key, cannot be bypassed by RLS gaps
+      const banRes = await fetch(`/api/check-ban?username=${encodeURIComponent(name)}`)
+      if (banRes.ok) {
+        const banData = await banRes.json()
+        console.log('[AuthScreen] ban check for', name, ':', banData)
+        if (banData.banned) {
+          toast.error('Tento hráč byl vyloučen ze hry.', { duration: 6000 })
+          setLoading(false)
+          return
+        }
       }
 
       const existing = await findUserByUsername(name)

@@ -20,30 +20,9 @@ const ODDS_KEY = import.meta.env.VITE_ODDS_API_KEY || ''
 const CACHE_KEY_MATCHES = 'wc2026_matches'
 const CACHE_KEY_ODDS    = 'wc2026_odds'
 
-// ─── Low-level fetch helpers ───────────────────────────────────────────────────
-
-async function footballGet(path, params = {}) {
-  const url = new URL('/api/football' + path, window.location.origin)
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)))
-  const res = await fetch(url.toString())
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error(`football-data.org ${res.status}: ${text.slice(0, 120)}`)
-  }
-  return res.json()
-}
-
-async function oddsGet(path, params = {}) {
-  const url = new URL('/api/odds' + path, window.location.origin)
-  url.searchParams.set('apiKey', ODDS_KEY)
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)))
-  const res = await fetch(url.toString())
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error(`the-odds-api.com ${res.status}: ${text.slice(0, 120)}`)
-  }
-  return res.json()
-}
+// Fixed endpoints — must match api/matches.js and api/odds.js Vercel functions
+const MATCHES_URL = '/api/matches'
+const ODDS_URL    = '/api/odds'
 
 // ─── Client-side standings from match data (saves 1 API call per refresh) ─────
 
@@ -161,8 +140,14 @@ export async function loadTournamentData(force = false) {
     return { fromCache: true, cacheAge: cached.age, ...cached.data }
   }
 
-  const raw = await footballGet('/competitions/WC/matches')
-  const matches  = normaliseMatches(raw.matches || [])
+  // Single request to fixed WC endpoint: /api/matches → /competitions/WC/matches
+  const res = await fetch(MATCHES_URL)
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`football-data.org ${res.status}: ${text.slice(0, 120)}`)
+  }
+  const raw = await res.json()
+  const matches   = normaliseMatches(raw.matches || [])
   const standings = computeStandingsFromMatches(matches)
 
   apiCache.set(CACHE_KEY_MATCHES, { matches, standings })
@@ -180,11 +165,16 @@ export async function loadOdds(matches, force = false) {
     return { fromCache: true, oddsMap: cached.data }
   }
 
-  const raw = await oddsGet('/sports/soccer_fifa_world_cup/odds', {
-    regions: 'eu',
-    markets: 'h2h,totals',
-    oddsFormat: 'decimal',
-  })
+  // Fixed WC odds endpoint: /api/odds → /sports/soccer_fifa_world_cup/odds
+  const url = new URL(ODDS_URL, window.location.origin)
+  url.searchParams.set('regions', 'eu')
+  url.searchParams.set('markets', 'h2h,totals')
+  url.searchParams.set('oddsFormat', 'decimal')
+  url.searchParams.set('apiKey', ODDS_KEY)
+
+  const res = await fetch(url.toString())
+  if (!res.ok) return { fromCache: false, oddsMap: {} }
+  const raw = await res.json()
   const oddsMap = buildOddsMap(matches, Array.isArray(raw) ? raw : [])
   apiCache.set(CACHE_KEY_ODDS, oddsMap)
   return { fromCache: false, oddsMap }

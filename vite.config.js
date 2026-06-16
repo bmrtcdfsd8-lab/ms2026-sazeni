@@ -16,18 +16,18 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       proxy: {
-        '/api/football': {
+        // Fixed endpoint — mirrors api/matches.js Vercel function
+        '/api/matches': {
           target: 'https://api.football-data.org/v4',
           changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/api\/football/, ''),
-          headers: {
-            'X-Auth-Token': env.VITE_FOOTBALL_API_KEY || '',
-          },
+          rewrite: () => '/competitions/WC/matches',
+          headers: { 'X-Auth-Token': env.VITE_FOOTBALL_API_KEY || '' },
         },
+        // Fixed endpoint — mirrors api/odds.js Vercel function
         '/api/odds': {
           target: 'https://api.the-odds-api.com/v4',
           changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/api\/odds/, ''),
+          rewrite: () => '/sports/soccer_fifa_world_cup/odds',
         },
       },
     },

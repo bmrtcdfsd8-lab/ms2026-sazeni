@@ -1,22 +1,35 @@
 import { useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { formatCoins } from '@/utils/format'
-import { RefreshCw, User, Coins, Info } from 'lucide-react'
+import { RefreshCw, User, Coins, Info, LogOut, Cloud } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export function Settings() {
-  const username = useStore((s) => s.username)
-  const coins = useStore((s) => s.coins)
+  const username   = useStore((s) => s.username)
+  const coins      = useStore((s) => s.coins)
+  const userId     = useStore((s) => s.userId)
   const setUsername = useStore((s) => s.setUsername)
-  const resetCoins = useStore((s) => s.resetCoins)
-  const [nameInput, setNameInput] = useState(username)
+  const resetCoins  = useStore((s) => s.resetCoins)
+  const logout      = useStore((s) => s.logout)
+  const [nameInput, setNameInput]     = useState(username)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
 
   function handleNameSave() {
     const trimmed = nameInput.trim()
     if (!trimmed) return
     setUsername(trimmed)
     toast.success('Přezdívka uložena!')
+  }
+
+  function handleLogout() {
+    if (!confirmLogout) {
+      setConfirmLogout(true)
+      setTimeout(() => setConfirmLogout(false), 5000)
+      return
+    }
+    logout()
+    toast.success('Odhlášeno — zadej přezdívku znovu pro přihlášení')
   }
 
   function handleReset() {
@@ -85,11 +98,36 @@ export function Settings() {
         </button>
       </SettingsCard>
 
+      {/* Account / Logout */}
+      <SettingsCard icon={<Cloud size={18} className="text-neon-blue" />} title="Účet">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <div className="text-sm font-semibold text-white">{username}</div>
+            <div className="text-xs text-neon-green mt-0.5">☁️ Synchronizováno se serverem</div>
+            {userId && (
+              <div className="text-xs text-slate-600 mt-1 font-mono">{userId.slice(0, 8)}…</div>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          className={[
+            'flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all',
+            confirmLogout
+              ? 'bg-neon-red/20 border-neon-red text-neon-red animate-bounce-subtle'
+              : 'bg-navy-700 border-white/10 text-white hover:border-white/30',
+          ].join(' ')}
+        >
+          <LogOut size={16} />
+          {confirmLogout ? '⚠️ Klikni znovu pro potvrzení' : 'Změnit hráče'}
+        </button>
+      </SettingsCard>
+
       {/* Info */}
       <SettingsCard icon={<Info size={18} className="text-slate-400" />} title="O aplikaci">
         <div className="space-y-2 text-sm text-slate-400">
           <p>MS2026 Sázení je <strong className="text-white">virtuální sázková aplikace</strong> bez reálných peněz.</p>
-          <p>Všechna data jsou uložena v prohlížeči (localStorage). Žádná registrace ani platby.</p>
+          <p>Mince a sázky jsou uloženy v Supabase a synchronizovány napříč zařízeními. Žádná registrace ani platby.</p>
           <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
             <InfoChip label="Kurzy" value="Evropský decimální formát" />
             <InfoChip label="Minimální sázka" value="10 mincí" />

@@ -9,6 +9,7 @@ export const useStore = create(
   persist(
     (set, get) => ({
       // ── User ──────────────────────────────────────────────────
+      userId: null,          // Supabase user UUID — null means not authenticated
       username: 'Sázkaři',
       coins: STARTING_COINS,
       transactions: [],
@@ -39,6 +40,26 @@ export const useStore = create(
 
       // ── Notifications ─────────────────────────────────────────
       notifications: [],
+
+      // ─────────────────────────────────────────────────────────
+      // Actions — Auth
+      // ─────────────────────────────────────────────────────────
+      // Called after successful Supabase login / register.
+      // coins/bets can be null to preserve local values.
+      login: (userId, username, coins, bets) => {
+        const update = { userId, username }
+        if (coins != null) update.coins = coins
+        if (bets  != null) update.bets  = bets
+        set(update)
+      },
+
+      logout: () => set({
+        userId: null,
+        username: 'Sázkaři',
+        coins: STARTING_COINS,
+        bets: [],
+        transactions: [],
+      }),
 
       // ─────────────────────────────────────────────────────────
       // Actions — User
@@ -300,6 +321,7 @@ export const useStore = create(
       name: 'ms2026-store',
       // Only persist user data — all match/odds data is re-fetched on load
       partialize: (s) => ({
+        userId: s.userId,
         username: s.username,
         coins: s.coins,
         transactions: s.transactions,

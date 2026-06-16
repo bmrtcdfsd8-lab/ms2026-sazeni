@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, Trophy, ReceiptText, Settings, Wifi, WifiOff, RefreshCw } from 'lucide-react'
+import { Home, Trophy, ReceiptText, Settings, Wifi, WifiOff, RefreshCw, Medal } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { CoinCounter } from '@/components/ui/CoinCounter'
 import { useStore } from '@/store/useStore'
@@ -11,6 +11,7 @@ const links = [
   { to: '/', label: 'Domů', icon: Home, end: true },
   { to: '/turnaj', label: 'Turnaj', icon: Trophy },
   { to: '/sazky', label: 'Moje sázky', icon: ReceiptText },
+  { to: '/zebricek', label: 'Žebříček', icon: Medal },
   { to: '/nastaveni', label: 'Nastavení', icon: Settings },
 ]
 

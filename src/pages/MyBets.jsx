@@ -33,26 +33,26 @@ export function MyBets() {
         <StatCard label="Otevřené sázky" value={openBets.length} accent="blue" />
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-navy-800 rounded-xl p-1 border border-white/10 w-fit">
+      {/* Tabs — full-width on mobile so they never overflow */}
+      <div className="flex gap-1 bg-navy-800 rounded-xl p-1 border border-white/10 w-full sm:w-fit">
         {[
-          { id: 'open', label: 'Otevřené', count: openBets.length, icon: Clock },
-          { id: 'settled', label: 'Ukončené', count: settledBets.length, icon: Archive },
-          { id: 'history', label: 'Historie', count: transactions.length, icon: TrendingUp },
+          { id: 'open',    label: 'Otevřené', count: openBets.length,      icon: Clock },
+          { id: 'settled', label: 'Ukončené', count: settledBets.length,   icon: Archive },
+          { id: 'history', label: 'Historie', count: transactions.length,  icon: TrendingUp },
         ].map(({ id, label, count, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             className={[
-              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all min-w-0',
               tab === id
                 ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/30'
                 : 'text-slate-400 hover:text-white',
             ].join(' ')}
           >
-            <Icon size={14} />
-            {label}
-            <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded-full">{count}</span>
+            <Icon size={13} className="shrink-0" />
+            <span className="truncate">{label}</span>
+            <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded-full shrink-0">{count}</span>
           </button>
         ))}
       </div>

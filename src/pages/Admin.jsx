@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Shield, Trash2, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useStore } from '@/store/useStore'
-import { fetchAllUsersAdmin, deleteUser } from '@/services/supabase'
+import { fetchAllUsersAdmin, deleteUser, banUsername } from '@/services/supabase'
 import { formatCoins } from '@/utils/format'
 
 const ADMIN_USERNAME = 'Hanz'
@@ -36,14 +36,15 @@ function AdminPanel() {
 
   async function handleDelete(user) {
     const ok = window.confirm(
-      `Smazat "${user.username}" a všechny jejich sázky?\nTato akce je nevratná.`
+      `Vyhodit "${user.username}" a zablokovat jejich přezdívku?\nHráč se nebude moct znovu přihlásit. Tato akce je nevratná.`
     )
     if (!ok) return
     setDeleting(user.id)
     try {
+      await banUsername(user.username)
       await deleteUser(user.id)
       setUsers((prev) => prev.filter((u) => u.id !== user.id))
-      toast.success(`${user.username} byl smazán`)
+      toast.success(`${user.username} byl vyhozen a zablokován`)
     } catch (err) {
       toast.error('Chyba: ' + err.message)
     } finally {

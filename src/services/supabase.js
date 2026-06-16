@@ -130,6 +130,24 @@ export async function deleteUser(userId) {
   if (error) throw error
 }
 
+// ── Bans ──────────────────────────────────────────────────────────────────────
+
+export async function banUsername(username) {
+  const { error } = await supabase
+    .from('banned_usernames')
+    .upsert({ username }, { onConflict: 'username', ignoreDuplicates: true })
+  if (error) throw error
+}
+
+export async function isUsernameBanned(username) {
+  const { data } = await supabase
+    .from('banned_usernames')
+    .select('username')
+    .eq('username', username)
+    .maybeSingle()
+  return !!data
+}
+
 // ── Leaderboard ───────────────────────────────────────────────────────────────
 
 export async function fetchLeaderboard() {

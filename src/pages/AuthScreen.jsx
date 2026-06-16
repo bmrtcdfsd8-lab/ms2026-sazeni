@@ -3,9 +3,9 @@ import { Toaster } from 'react-hot-toast'
 import toast from 'react-hot-toast'
 import { Loader2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
-import { createUser, findUserByUsername, fetchUserBets } from '@/services/supabase'
+import { createUser, findUserByUsername, fetchUserBets, isUsernameBanned } from '@/services/supabase'
 
-export function AuthScreen() {
+export function AuthScreen({ bannedError = false }) {
   const [username, setUsername] = useState('')
   const [loading, setLoading]   = useState(false)
   const login = useStore((s) => s.login)
@@ -18,6 +18,13 @@ export function AuthScreen() {
 
     setLoading(true)
     try {
+      const banned = await isUsernameBanned(name)
+      if (banned) {
+        toast.error('Tento hráč byl vyloučen ze hry.')
+        setLoading(false)
+        return
+      }
+
       const existing = await findUserByUsername(name)
       if (existing) {
         // Returning player — load their bets too
@@ -54,6 +61,13 @@ export function AuthScreen() {
           <p className="text-neon-blue font-bold text-lg">Sázení</p>
           <p className="text-slate-500 text-sm mt-2">Virtuální sázková soutěž — žádné reálné peníze</p>
         </div>
+
+        {/* Ban error — persistent, shown when kicked by admin */}
+        {bannedError && (
+          <div className="mb-4 rounded-xl border border-neon-red/40 bg-neon-red/10 px-4 py-3 text-sm text-neon-red font-medium text-center">
+            🚫 Tento hráč byl vyloučen ze hry.
+          </div>
+        )}
 
         {/* Card */}
         <div className="rounded-2xl border border-white/10 bg-navy-800/60 backdrop-blur-sm p-6 shadow-2xl">

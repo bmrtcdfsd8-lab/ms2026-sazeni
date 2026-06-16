@@ -193,6 +193,16 @@ export function clearApiCache() {
 
 // ─── Odds map builder ─────────────────────────────────────────────────────────
 
+// Mirror of betting.js FAVORITES — checked before writing API prices to the cache
+// so that swapped h2h outcomes are corrected at the source, not just at display time.
+const WC_FAVORITES = new Set([
+  'FRA', 'France',
+  'BRA', 'Brazil', 'Brasil',
+  'ENG', 'England',
+  'ESP', 'Spain',
+  'ARG', 'Argentina',
+])
+
 export function buildOddsMap(matches, oddsEvents) {
   const map = {}
   if (!oddsEvents?.length) return map
@@ -227,11 +237,18 @@ export function buildOddsMap(matches, oddsEvents) {
       const awayPrice = byName[ev.away_team]
       const drawPrice = byName['Draw']
       if (homePrice && awayPrice) {
-        entry.MATCH_WINNER = {
-          home: clamp(homePrice),
-          draw: drawPrice ? clamp(drawPrice) : null,
-          away: clamp(awayPrice),
+        let mwHome = clamp(homePrice)
+        let mwDraw = drawPrice ? clamp(drawPrice) : null
+        const mwAway = clamp(awayPrice)
+
+        // Validate: some bookmakers transpose home-win and draw outcomes.
+        // For strong home favourites the win price must be ≤ the draw price.
+        const homeTla = match.homeTeam?.tla || match.homeTeam?.id || match.homeTeam?.name || ''
+        if (mwDraw !== null && mwHome > mwDraw && WC_FAVORITES.has(homeTla)) {
+          ;[mwHome, mwDraw] = [mwDraw, mwHome]
         }
+
+        entry.MATCH_WINNER = { home: mwHome, draw: mwDraw, away: mwAway }
       }
     }
 

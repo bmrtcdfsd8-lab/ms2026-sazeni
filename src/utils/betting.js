@@ -49,12 +49,29 @@ export function sanitiseApiOdds(apiOdds) {
 
 // ─── Match-winner odds with strong-favourite tier ─────────────────────────────
 
-const FAVORITES = new Set(['FRA', 'BRA', 'ENG', 'ESP', 'ARG'])
+// Include both TLA codes and common name forms — football-data.org omits tla for
+// some teams, falling back to shortName/name in normaliseTeam, so both must match.
+const FAVORITES = new Set([
+  'FRA', 'France',
+  'BRA', 'Brazil', 'Brasil',
+  'ENG', 'England',
+  'ESP', 'Spain',
+  'ARG', 'Argentina',
+])
+
+function isFavorite(team) {
+  if (!team) return false
+  return (
+    FAVORITES.has(team.tla  || '') ||
+    FAVORITES.has(team.id   || '') ||
+    FAVORITES.has(team.name || '')
+  )
+}
 
 function matchWinnerOdds(matchId, homeTeam, awayTeam) {
   const rng = makeRng(matchId, 'winner')
-  const hFav = FAVORITES.has(homeTeam?.tla || homeTeam?.id || '')
-  const aFav = FAVORITES.has(awayTeam?.tla || awayTeam?.id || '')
+  const hFav = isFavorite(homeTeam)
+  const aFav = isFavorite(awayTeam)
 
   if (hFav && !aFav) {
     // Strong home favourite
@@ -170,6 +187,19 @@ export function getMarketsForMatch(match, apiOdds) {
     ...clean,
     // Deep-merge OVER_UNDER: API values fill in real prices, fallback covers the rest
     OVER_UNDER: { ...fallback.OVER_UNDER, ...(clean.OVER_UNDER || {}) },
+  }
+
+  // Validate match-winner odds: for strong home favourites, home win (1) must always
+  // have shorter odds than draw (X).  If they appear swapped — whether from the API
+  // returning transposed outcomes or from the fallback using the wrong tier because
+  // the TLA code was missing — swap them back.
+  if (
+    o.MATCH_WINNER?.home != null &&
+    o.MATCH_WINNER?.draw != null &&
+    isFavorite(homeTeam) &&
+    o.MATCH_WINNER.home > o.MATCH_WINNER.draw
+  ) {
+    o.MATCH_WINNER = { ...o.MATCH_WINNER, home: o.MATCH_WINNER.draw, draw: o.MATCH_WINNER.home }
   }
 
   // Seeded scorer odds — stable per match + player slot

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Shield, Trash2, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useStore } from '@/store/useStore'
-import { fetchAllUsersAdmin, deleteUser, banUsername } from '@/services/supabase'
+import { fetchAllUsersAdmin, deleteUser, deleteUserByUsername, banUsername } from '@/services/supabase'
 import { formatCoins } from '@/utils/format'
 
 const ADMIN_USERNAME = 'Hanz'
@@ -41,12 +41,18 @@ function AdminPanel() {
     if (!ok) return
     setDeleting(user.id)
     try {
+      // Ban first so the slot is blocked even if delete takes a moment
       await banUsername(user.username)
+      // Delete by UUID (cascade removes bets) + by username as fallback
       await deleteUser(user.id)
-      setUsers((prev) => prev.filter((u) => u.id !== user.id))
+      await deleteUserByUsername(user.username)
       toast.success(`${user.username} byl vyhozen a zablokován`)
+      // Re-fetch from Supabase to confirm deletion — never rely on optimistic removal
+      await load()
     } catch (err) {
       toast.error('Chyba: ' + err.message)
+      // Still reload on error to show current server state
+      await load()
     } finally {
       setDeleting(null)
     }

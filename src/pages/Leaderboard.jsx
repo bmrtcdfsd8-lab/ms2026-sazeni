@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Medal, RefreshCw, Wifi, WifiOff, Trophy } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { supabase, fetchLeaderboard } from '@/services/supabase'
@@ -13,29 +13,37 @@ export function Leaderboard() {
   const [rtOnline, setRtOnline] = useState(false)
   const [lastAt, setLastAt]   = useState(null)
 
-  const load = useCallback(async () => {
+  async function load() {
     setLoading(true)
-    const data = await fetchLeaderboard()
-    setRows(data)
-    setLastAt(new Date())
-    setLoading(false)
-  }, [])
+    try {
+      const data = await fetchLeaderboard()
+      setRows(data)
+      setLastAt(new Date())
+    } catch (err) {
+      console.warn('[Leaderboard] fetch failed:', err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
+    // Fresh fetch every time the page is visited (component mounts)
     load()
 
-    // Real-time: subscribe to users table — re-fetch leaderboard on any change
+    // Real-time: re-fetch on any change to the users table
     const channel = supabase
       .channel('ms2026-leaderboard')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'users' },
-        () => fetchLeaderboard().then((data) => { setRows(data); setLastAt(new Date()) })
+        () => fetchLeaderboard()
+          .then((data) => { setRows(data); setLastAt(new Date()) })
+          .catch(() => {})
       )
       .subscribe((status) => setRtOnline(status === 'SUBSCRIBED'))
 
     return () => supabase.removeChannel(channel)
-  }, [load])
+  }, []) // empty deps — runs once per mount, which is once per page visit
 
   return (
     <div className="space-y-6 max-w-2xl">

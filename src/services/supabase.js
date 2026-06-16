@@ -130,6 +130,15 @@ export async function deleteUser(userId) {
   if (error) throw error
 }
 
+export async function deleteUserByUsername(username) {
+  // Belt-and-suspenders: delete by username in case UUID lookup misses
+  const { error } = await supabase
+    .from('users')
+    .delete()
+    .eq('username', username)
+  if (error) throw error
+}
+
 // ── Bans ──────────────────────────────────────────────────────────────────────
 
 export async function banUsername(username) {

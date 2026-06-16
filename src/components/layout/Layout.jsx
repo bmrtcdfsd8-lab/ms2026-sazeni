@@ -1,4 +1,4 @@
-import { Navbar } from './Navbar'
+import { Navbar, BottomNav } from './Navbar'
 import { BetSlip } from '@/components/betting/BetSlip'
 import { Toaster } from 'react-hot-toast'
 
@@ -6,9 +6,11 @@ export function Layout({ children }) {
   return (
     <div className="min-h-screen bg-navy-950 text-white">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 py-6 pb-24">
+      {/* pb-32 on mobile = 128px clears both the fixed BottomNav (56px) and BetSlip */}
+      <main className="max-w-7xl mx-auto px-4 py-6 pb-32 sm:pb-24">
         {children}
       </main>
+      <BottomNav />
       <BetSlip />
       <Toaster
         position="top-right"

@@ -68,8 +68,8 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Nav */}
-        <nav className="flex items-center gap-1">
+        {/* Nav — desktop only; mobile uses BottomNav */}
+        <nav className="hidden sm:flex items-center gap-1">
           {links.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
@@ -141,5 +141,51 @@ export function Navbar() {
         </div>
       </div>
     </header>
+  )
+}
+
+// Fixed bottom tab bar — mobile only (hidden on sm+)
+// Each item gets flex-1 of the full viewport width with a 44px min touch target.
+export function BottomNav() {
+  return (
+    <nav
+      className="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-navy-950/95 backdrop-blur-md border-t border-white/10"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
+      <div className="flex items-stretch h-14">
+        {links.map(({ to, label, icon: Icon, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] transition-colors"
+          >
+            {({ isActive }) => (
+              <>
+                <span
+                  className={[
+                    'flex items-center justify-center w-9 h-7 rounded-xl transition-colors',
+                    isActive ? 'bg-neon-blue/15' : '',
+                  ].join(' ')}
+                >
+                  <Icon
+                    size={18}
+                    className={isActive ? 'text-neon-blue' : 'text-slate-400'}
+                  />
+                </span>
+                <span
+                  className={[
+                    'text-[10px] font-medium leading-none',
+                    isActive ? 'text-neon-blue' : 'text-slate-500',
+                  ].join(' ')}
+                >
+                  {label}
+                </span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
+    </nav>
   )
 }

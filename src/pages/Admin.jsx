@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Shield, Trash2, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useStore } from '@/store/useStore'
-import { fetchAllUsersAdmin, deleteUser, deleteUserByUsername, banUsername } from '@/services/supabase'
+import { fetchAllUsersAdmin, banUsername } from '@/services/supabase'
 import { formatCoins } from '@/utils/format'
 
 const ADMIN_USERNAME = 'Hanz'
@@ -41,17 +41,24 @@ function AdminPanel() {
     if (!ok) return
     setDeleting(user.id)
     try {
-      // Ban first so the slot is blocked even if delete takes a moment
+      // 1. Ban first — blocks re-registration even if delete takes a moment
       await banUsername(user.username)
-      // Delete by UUID (cascade removes bets) + by username as fallback
-      await deleteUser(user.id)
-      await deleteUserByUsername(user.username)
+
+      // 2. Delete via server endpoint using service role key (bypasses RLS)
+      const res = await fetch('/api/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user.username }),
+      })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || `HTTP ${res.status}`)
+
+      console.log('[Admin] delete-user result:', result)
       toast.success(`${user.username} byl vyhozen a zablokován`)
-      // Re-fetch from Supabase to confirm deletion — never rely on optimistic removal
+      // Re-fetch from Supabase to confirm deletion
       await load()
     } catch (err) {
       toast.error('Chyba: ' + err.message)
-      // Still reload on error to show current server state
       await load()
     } finally {
       setDeleting(null)
